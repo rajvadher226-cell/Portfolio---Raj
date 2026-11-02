@@ -77,7 +77,7 @@ export interface ProjectItem {
   index: string;
   title: string;
   subtitle: string;
-  category: 'Valuation & M&A' | 'Venture & IPO' | 'Business Finance';
+  category: 'Valuation & M&A' | 'Venture & IPO' | 'Business Finance' | 'Equity Research';
   projectClassification: string;
   headlineMetric: string;
   metricContext: string;
@@ -89,7 +89,15 @@ export interface ProjectItem {
   methodology: string[];
   deliverables: string[];
   keyFindings: string[];
-  chartType: 'dcf-bridge' | 'ma-accretion' | 'ipo-distribution' | 'venture-funnel' | 'exit-matrix' | 'working-capital';
+  skills?: string[];
+  chartType:
+    | 'dcf-bridge'
+    | 'ma-accretion'
+    | 'ipo-distribution'
+    | 'venture-funnel'
+    | 'exit-matrix'
+    | 'working-capital'
+    | 'equity-research';
 }
 
 export function filterProjectsByCategory(
@@ -129,6 +137,7 @@ export function formatResumePlainText(params: {
     `  Statutory audit engagements, Ind AS financial statement verification, and IFCoFR internal control testing.`,
     ``,
     `KEY ANALYTICAL & VALUATION PROJECTS`,
+    `- Equirus – Semiconductor Equity Research Project (DCF & Relative Valuation, Industry Analysis)`,
     `- Ferns N Petals Corporate Valuation (~₹1,900Cr implied EV; Academic DCF & Relative Valuation)`,
     `- JPMorgan / Forage M&A Valuation Simulation ($500M target enterprise valuation)`,
     `- Empirical Analysis of 350+ SME IPOs & 250-Company Startup Exit Screening`,

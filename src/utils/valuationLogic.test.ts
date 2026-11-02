@@ -67,10 +67,31 @@ test('filterProjectsByCategory filters projects accurately', () => {
       keyFindings: [],
       chartType: 'ipo-distribution',
     },
+    {
+      id: 'equirus',
+      index: '03',
+      title: 'Equirus Semiconductor Equity Research',
+      subtitle: 'Equity Research & Valuation',
+      category: 'Equity Research',
+      projectClassification: 'Equity Research',
+      headlineMetric: 'Semiconductors',
+      metricContext: 'Equity Research & Valuation',
+      period: '2025',
+      affiliation: 'Equirus',
+      summary: 'Semiconductor equity research',
+      analyticalApproach: 'DCF & Comps',
+      assumptions: ['Industry drivers'],
+      methodology: [],
+      deliverables: [],
+      keyFindings: [],
+      chartType: 'equity-research',
+    },
   ];
 
-  assert.equal(filterProjectsByCategory(sample, 'All').length, 2);
+  assert.equal(filterProjectsByCategory(sample, 'All').length, 3);
   assert.equal(filterProjectsByCategory(sample, 'Valuation & M&A').length, 1);
+  assert.equal(filterProjectsByCategory(sample, 'Equity Research').length, 1);
+  assert.equal(filterProjectsByCategory(sample, 'Equity Research')[0].id, 'equirus');
   assert.equal(filterProjectsByCategory(sample, 'Venture & IPO')[0].id, 'ipo');
 });
 

@@ -18,7 +18,13 @@ import {
 } from '../utils/valuationLogic';
 import { ScrollReveal } from './ScrollReveal';
 
-const CATEGORIES = ['All', 'Valuation & M&A', 'Venture & IPO', 'Business Finance'] as const;
+const CATEGORIES = [
+  'All',
+  'Valuation & M&A',
+  'Equity Research',
+  'Venture & IPO',
+  'Business Finance',
+] as const;
 
 export const ProjectsSection: React.FC = () => {
   const [activeCategory, setActiveCategory] = useState<string>('All');
@@ -128,6 +134,48 @@ export const ProjectsSection: React.FC = () => {
             </text>
             <text x="185" y="58" fill="#19B7A5" fontSize="9" fontFamily="JetBrains Mono">
               FOOTBALL FIELD
+            </text>
+          </svg>
+        );
+      case 'equity-research':
+        return (
+          <svg
+            viewBox="0 0 320 92"
+            className="w-full h-20 transition-transform duration-300 group-hover:scale-105"
+            aria-hidden="true"
+          >
+            <line x1="16" y1="78" x2="304" y2="78" stroke="#243B67" strokeWidth="1" />
+            {/* Semiconductor microchip icon architecture */}
+            <rect x="22" y="24" width="46" height="46" rx="4" fill="#10192D" stroke="#19B7A5" strokeWidth="1.5" />
+            <rect x="32" y="34" width="26" height="26" rx="2" fill="#172C50" stroke="#4776FF" strokeWidth="1" />
+            {/* Chip interconnect pins */}
+            <line x1="22" y1="33" x2="14" y2="33" stroke="#19B7A5" strokeWidth="1.5" />
+            <line x1="22" y1="47" x2="14" y2="47" stroke="#19B7A5" strokeWidth="1.5" />
+            <line x1="22" y1="61" x2="14" y2="61" stroke="#19B7A5" strokeWidth="1.5" />
+            <line x1="68" y1="33" x2="76" y2="33" stroke="#19B7A5" strokeWidth="1.5" />
+            <line x1="68" y1="47" x2="76" y2="47" stroke="#19B7A5" strokeWidth="1.5" />
+            <line x1="68" y1="61" x2="76" y2="61" stroke="#19B7A5" strokeWidth="1.5" />
+            {/* Valuation & Comps Target Range Bars */}
+            <rect x="98" y="44" width="28" height="34" rx="2" fill="#4776FF" fillOpacity="0.65" />
+            <rect x="138" y="30" width="28" height="48" rx="2" fill="#4776FF" />
+            <rect x="178" y="18" width="28" height="60" rx="2" fill="#19B7A5" />
+            <rect x="218" y="10" width="28" height="68" rx="2" fill="#10192D" stroke="#D7AE68" strokeWidth="1.5" />
+            {/* Target Price Guidance Line */}
+            <line x1="90" y1="24" x2="256" y2="24" stroke="#F5F6F8" strokeWidth="1.25" strokeDasharray="3 3" />
+            <text x="264" y="27" fill="#D7AE68" fontSize="8" fontFamily="JetBrains Mono" fontWeight="600">
+              TARGET
+            </text>
+            <text x="112" y="40" textAnchor="middle" fill="#F5F6F8" fontSize="7" fontFamily="JetBrains Mono">
+              HIST
+            </text>
+            <text x="152" y="26" textAnchor="middle" fill="#F5F6F8" fontSize="7" fontFamily="JetBrains Mono">
+              REL
+            </text>
+            <text x="192" y="14" textAnchor="middle" fill="#F5F6F8" fontSize="7" fontFamily="JetBrains Mono">
+              DCF
+            </text>
+            <text x="232" y="26" textAnchor="middle" fill="#D7AE68" fontSize="8" fontFamily="JetBrains Mono" fontWeight="600">
+              EQUIRUS
             </text>
           </svg>
         );
@@ -315,6 +363,19 @@ export const ProjectsSection: React.FC = () => {
                       <p className="text-xs sm:text-sm text-[#5E6D87] leading-relaxed">
                         {project.summary}
                       </p>
+
+                      {project.skills && project.skills.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5 pt-1">
+                          {project.skills.map((skill, sIdx) => (
+                            <span
+                              key={sIdx}
+                              className="px-2 py-0.5 rounded text-[10px] font-mono-num font-medium bg-[#10192D]/5 text-[#172C50] border border-[#243B67]/15"
+                            >
+                              {skill}
+                            </span>
+                          ))}
+                        </div>
+                      )}
 
                       {/* Expandable Inline Case Study Details */}
                       {isExpanded && (
@@ -664,6 +725,24 @@ export const ProjectsSection: React.FC = () => {
                 </ul>
               </div>
             </div>
+
+            {selectedProject.skills && selectedProject.skills.length > 0 && (
+              <div className="pt-4 border-t border-[#DCE2EC] space-y-2">
+                <h4 className="text-xs font-mono-num uppercase tracking-wider text-[#10192D] font-semibold">
+                  6. Core Competencies & Skills
+                </h4>
+                <div className="flex flex-wrap gap-2">
+                  {selectedProject.skills.map((skill, sIdx) => (
+                    <span
+                      key={sIdx}
+                      className="px-2.5 py-1 rounded text-xs font-mono-num font-medium bg-[#172C50] text-[#F5F6F8] border border-[#243B67]"
+                    >
+                      {skill}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Footer with Next/Prev Case Study Navigation */}
             <div className="pt-5 border-t border-[#DCE2EC] flex flex-wrap items-center justify-between gap-4">
