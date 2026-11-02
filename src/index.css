@@ -1,0 +1,175 @@
+@import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  /* Upgraded Premium Investment Banking & Editorial Palette */
+  --color-midnight-navy: #10192D;
+  --color-deep-blue: #172C50;
+  --color-electric-blue: #4776FF;
+  --color-teal: #19B7A5;
+  --color-warm-white: #F5F6F8;
+  --color-soft-gold: #D7AE68;
+  --color-primary-text: #192438;
+  --color-muted-slate: #5E6D87;
+  --color-border-light: #DCE2EC;
+  --color-border-dark: #243B67;
+
+  /* Typography Tokens */
+  --font-sans: 'Manrope', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-serif: 'Cormorant Garamond', Georgia, serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    font-family: var(--font-sans);
+    background-color: var(--color-warm-white);
+    color: var(--color-primary-text);
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+
+  h1, h2, h3, h4, .font-editorial {
+    text-wrap: balance;
+  }
+}
+
+.font-editorial {
+  font-family: var(--font-serif);
+}
+
+.font-sans-ui {
+  font-family: var(--font-sans);
+}
+
+.font-mono-num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Subtle architectural data-grid backgrounds */
+.bg-architectural-grid {
+  background-size: 44px 44px;
+  background-image: 
+    linear-gradient(to right, rgba(25, 36, 56, 0.045) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(25, 36, 56, 0.045) 1px, transparent 1px);
+}
+
+.bg-architectural-grid-dark {
+  background-size: 44px 44px;
+  background-image: 
+    linear-gradient(to right, rgba(245, 246, 248, 0.045) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(245, 246, 248, 0.045) 1px, transparent 1px);
+}
+
+/* Rich midnight-navy atmospheric hero & dark section backgrounds with subtle 44px grid */
+.bg-navy-atmosphere,
+.bg-navy-atmosphere.bg-architectural-grid-dark {
+  background-color: #10192D;
+  background-image:
+    linear-gradient(to right, rgba(245, 246, 248, 0.035) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(245, 246, 248, 0.035) 1px, transparent 1px),
+    radial-gradient(circle at 14% 18%, rgba(71, 118, 255, 0.22) 0%, transparent 45%),
+    radial-gradient(circle at 86% 24%, rgba(25, 183, 165, 0.16) 0%, transparent 42%),
+    radial-gradient(circle at 72% 84%, rgba(215, 174, 104, 0.12) 0%, transparent 40%),
+    linear-gradient(135deg, #10192D 0%, #14223E 52%, #172C50 100%);
+  background-size:
+    44px 44px,
+    44px 44px,
+    100% 100%,
+    100% 100%,
+    100% 100%,
+    100% 100%;
+}
+
+/* Subtle animated ambient glow pulse for hero lighting */
+@keyframes pulseGlowSlow {
+  0%, 100% {
+    opacity: 0.65;
+    transform: scale(1) translate3d(0, 0, 0);
+  }
+  50% {
+    opacity: 0.95;
+    transform: scale(1.06) translate3d(8px, -6px, 0);
+  }
+}
+
+@keyframes chartLineFlow {
+  0% {
+    stroke-dashoffset: 360;
+  }
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+
+.animate-ambient-glow {
+  animation: pulseGlowSlow 9s ease-in-out infinite;
+}
+
+.animate-chart-line {
+  stroke-dasharray: 360;
+  animation: chartLineFlow 2.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Card hover elevation & border transition */
+.card-interactive {
+  transition: transform 280ms cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 280ms cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 220ms ease;
+}
+
+.card-interactive:hover {
+  transform: translate3d(0, -4px, 0);
+  box-shadow: 0 18px 38px -12px rgba(16, 25, 45, 0.14);
+}
+
+/* Subtle editorial scroll-reveal transitions (compositor-only opacity + transform) */
+.reveal-section {
+  will-change: opacity, transform;
+  transition-property: opacity, transform;
+  transition-duration: 620ms;
+  transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.reveal-hidden {
+  opacity: 0;
+  transform: translate3d(0, 20px, 0);
+}
+
+.reveal-visible {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto !important;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@media print {
+  body {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+  }
+  header,
+  footer,
+  .no-print {
+    display: none !important;
+  }
+}
+
+
+
