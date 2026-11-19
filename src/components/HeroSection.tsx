@@ -1,60 +1,22 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import {
-  ArrowUpRight,
   Upload,
   RotateCcw,
-  FileSpreadsheet,
   Award,
   TrendingUp,
   Briefcase,
 } from 'lucide-react';
 import { PROFILE_DATA } from '../data/portfolioData';
-import { formatAnimatedMetric } from '../utils/valuationLogic';
-import { ScrollReveal } from './ScrollReveal';
-
-interface HeroSectionProps {
-  onOpenDossier: () => void;
-}
 
 const PORTRAIT_NAVY_UI = '/assets/aistudio/portrait_navy_ui.png';
 const PORTRAIT_WHITE_STUDIO = '/assets/aistudio/portrait_white_studio.png';
 const PORTRAIT_ORIGINAL =
   '/assets/aistudio/Screenshot_20261102_160450.jpg_7a4f8ff4.jpeg';
 
-export const HeroSection: React.FC<HeroSectionProps> = ({ onOpenDossier }) => {
+export const HeroSection: React.FC = () => {
   const [customPortraitUrl, setCustomPortraitUrl] = useState<string | null>(null);
   const [backdropStyle, setBackdropStyle] = useState<'navy' | 'white' | 'original'>('navy');
-  const [countProgress, setCountProgress] = useState<number>(1);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-
-  useEffect(() => {
-    const prefersReducedMotion =
-      typeof window !== 'undefined' &&
-      typeof window.matchMedia === 'function' &&
-      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-    if (prefersReducedMotion) {
-      setCountProgress(1);
-      return;
-    }
-
-    let animationFrameId: number;
-    const durationMs = 950;
-    const startTime = performance.now();
-
-    const step = (now: number) => {
-      const elapsed = now - startTime;
-      const raw = Math.min(1, elapsed / durationMs);
-      const eased = 1 - Math.pow(1 - raw, 3);
-      setCountProgress(eased);
-      if (raw < 1) {
-        animationFrameId = requestAnimationFrame(step);
-      }
-    };
-
-    animationFrameId = requestAnimationFrame(step);
-    return () => cancelAnimationFrame(animationFrameId);
-  }, []);
 
   const handlePortraitUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -167,43 +129,6 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onOpenDossier }) => {
               </div>
             </div>
 
-            {/* Prominent Primary CTA with Refined Glow + Current Mandate Strip */}
-            <div className="pt-1 space-y-6">
-              <div className="flex flex-wrap items-center gap-4">
-                <a
-                  href="#projects"
-                  className="inline-flex items-center gap-2.5 px-6 py-3.5 rounded-md text-xs sm:text-sm font-semibold text-[#F5F6F8] bg-gradient-to-r from-[#4776FF] to-[#2F5CE8] hover:from-[#3B68F0] hover:to-[#19B7A5] shadow-lg shadow-[#4776FF]/30 hover:shadow-[#19B7A5]/30 transition-all duration-200 hover:-translate-y-0.5 whitespace-nowrap shrink-0"
-                >
-                  <span>Explore Case Studies & Valuation Work</span>
-                  <ArrowUpRight className="w-4 h-4" aria-hidden="true" />
-                </a>
-
-                <button
-                  type="button"
-                  onClick={onOpenDossier}
-                  className="inline-flex items-center gap-2 px-5 py-3.5 rounded-md text-xs sm:text-sm font-semibold text-[#F5F6F8] bg-[#172C50]/80 border border-[#D7AE68]/55 hover:border-[#D7AE68] hover:bg-[#172C50] transition-all duration-200 whitespace-nowrap shrink-0 cursor-pointer"
-                >
-                  <FileSpreadsheet className="w-4 h-4 text-[#D7AE68]" aria-hidden="true" />
-                  <span>Review Curriculum Vitae</span>
-                </button>
-              </div>
-
-              {/* Current Mandate Footnote */}
-              <div className="p-4 rounded-lg bg-[#172C50]/60 border border-[#243B67] flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs">
-                <div className="flex items-center gap-2.5 text-[#F5F6F8]/90">
-                  <span className="w-2 h-2 rounded-full bg-[#19B7A5] shrink-0" aria-hidden="true" />
-                  <span>
-                    <strong className="text-[#D7AE68]">Current Mandate:</strong> Management Trainee, Finance – North Asia at Allcargo Global (May 2026–Present)
-                  </span>
-                </div>
-                <a
-                  href="#experience"
-                  className="text-[#19B7A5] font-semibold hover:underline whitespace-nowrap shrink-0"
-                >
-                  View Timeline →
-                </a>
-              </div>
-            </div>
           </div>
 
           {/* Right Column: Open, Breathable Circular Executive Portrait (5 cols) */}
@@ -315,43 +240,6 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onOpenDossier }) => {
           </div>
         </div>
 
-        {/* Full-Width 4-Column Institutional Milestone KPI Cards with Gentle Number-Counting */}
-        <div className="mt-12 lg:mt-14 pt-8 border-t border-[#243B67]/80">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 lg:gap-6">
-            {PROFILE_DATA.heroKpis.map((kpi, idx) => {
-              const accentColors = [
-                'border-t-[#4776FF] text-[#4776FF]',
-                'border-t-[#19B7A5] text-[#19B7A5]',
-                'border-t-[#D7AE68] text-[#D7AE68]',
-                'border-t-[#4776FF] text-[#4776FF]',
-              ];
-              return (
-                <ScrollReveal
-                  key={kpi.label}
-                  delayMs={idx * 90}
-                  className={`p-5 sm:p-6 rounded-xl bg-[#172C50]/70 border border-[#243B67] border-t-2 ${accentColors[idx].split(' ')[0]} hover:bg-[#172C50] transition-colors space-y-2`}
-                >
-                  <div className="flex items-baseline justify-between gap-2">
-                    <div className="font-mono-num text-2xl sm:text-3xl font-semibold text-[#F5F6F8] tracking-tight whitespace-nowrap">
-                      {formatAnimatedMetric(kpi.value, countProgress)}
-                    </div>
-                    <span
-                      className={`text-[10px] font-mono-num uppercase tracking-wider whitespace-nowrap shrink-0 ${accentColors[idx].split(' ')[1]}`}
-                    >
-                      0{idx + 1} · VERIFIED
-                    </span>
-                  </div>
-                  <div className="text-xs sm:text-sm font-semibold text-[#F5F6F8]">
-                    {kpi.label}
-                  </div>
-                  <div className="text-xs text-[#F5F6F8]/70 leading-relaxed">
-                    {kpi.detail}
-                  </div>
-                </ScrollReveal>
-              );
-            })}
-          </div>
-        </div>
       </div>
     </section>
   );

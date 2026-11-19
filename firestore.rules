@@ -1,0 +1,131 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global default-deny safety net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerifiedOwner() {
+      return isSignedIn()
+        && request.auth.token.email == 'rajvadher226@gmail.com'
+        && request.auth.token.email_verified == true;
+    }
+
+    function isValidCredential(data) {
+      return data.keys().hasAll([
+          'name',
+          'category',
+          'fileName',
+          'mimeType',
+          'fileSize',
+          'chunkCount',
+          'ownerUid',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'name',
+          'category',
+          'fileName',
+          'mimeType',
+          'fileSize',
+          'chunkCount',
+          'notes',
+          'ownerUid',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.name is string && data.name.size() >= 1 && data.name.size() <= 160
+        && data.category in ['Resume', 'Projects', 'Certificates', 'Other']
+        && data.fileName is string && data.fileName.size() >= 1 && data.fileName.size() <= 255
+        && data.mimeType is string && data.mimeType.size() >= 1 && data.mimeType.size() <= 128
+        && data.fileSize is number && data.fileSize > 0 && data.fileSize <= 10485760
+        && data.chunkCount is int && data.chunkCount >= 1 && data.chunkCount <= 32
+        && (!('notes' in data) || (data.notes is string && data.notes.size() <= 500))
+        && data.ownerUid is string
+        && data.ownerUid.size() >= 1
+        && data.ownerUid.size() <= 128
+        && data.ownerUid.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.ownerUid == request.auth.uid
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidChunk(data) {
+      return data.keys().hasAll(['index', 'data', 'ownerUid', 'createdAt'])
+        && data.keys().hasOnly(['index', 'data', 'ownerUid', 'createdAt'])
+        && data.index is int && data.index >= 0 && data.index < 32
+        && data.data is string && data.data.size() >= 1 && data.data.size() <= 600000
+        && data.ownerUid is string
+        && data.ownerUid.size() >= 1
+        && data.ownerUid.size() <= 128
+        && data.ownerUid.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.ownerUid == request.auth.uid
+        && data.createdAt is timestamp;
+    }
+
+    // Startup connection check document
+    match /test/connection {
+      allow get: if true;
+    }
+
+    // Uploaded portfolio credentials (Resume, Projects, Certificates, Other)
+    match /credentials/{credentialId} {
+      allow get: if isValidId(credentialId);
+      allow list: if resource.data.category in ['Resume', 'Projects', 'Certificates', 'Other'];
+
+      allow create: if isVerifiedOwner()
+        && isValidId(credentialId)
+        && isValidCredential(incoming())
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+
+      allow update: if isVerifiedOwner()
+        && isValidId(credentialId)
+        && isValidCredential(incoming())
+        && incoming().ownerUid == existing().ownerUid
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'category', 'notes', 'updatedAt']);
+
+      allow delete: if isVerifiedOwner() && isValidId(credentialId);
+
+      // Chunked file payload subcollection
+      match /chunks/{chunkId} {
+        allow get: if isValidId(credentialId) && isValidId(chunkId);
+        allow list: if resource.data.index is int && resource.data.index >= 0 && resource.data.index < 32;
+
+        allow create: if isVerifiedOwner()
+          && isValidId(credentialId)
+          && isValidId(chunkId)
+          && isValidChunk(incoming())
+          && incoming().createdAt == request.time
+          && existsAfter(/databases/$(database)/documents/credentials/$(credentialId))
+          && getAfter(/databases/$(database)/documents/credentials/$(credentialId)).data.ownerUid == request.auth.uid;
+
+        allow update: if false;
+        allow delete: if isVerifiedOwner()
+          && isValidId(credentialId)
+          && isValidId(chunkId);
+      }
+    }
+  }
+}

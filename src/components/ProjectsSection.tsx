@@ -145,37 +145,42 @@ export const ProjectsSection: React.FC = () => {
             aria-hidden="true"
           >
             <line x1="16" y1="78" x2="304" y2="78" stroke="#243B67" strokeWidth="1" />
-            {/* Semiconductor microchip icon architecture */}
-            <rect x="22" y="24" width="46" height="46" rx="4" fill="#10192D" stroke="#19B7A5" strokeWidth="1.5" />
-            <rect x="32" y="34" width="26" height="26" rx="2" fill="#172C50" stroke="#4776FF" strokeWidth="1" />
-            {/* Chip interconnect pins */}
-            <line x1="22" y1="33" x2="14" y2="33" stroke="#19B7A5" strokeWidth="1.5" />
-            <line x1="22" y1="47" x2="14" y2="47" stroke="#19B7A5" strokeWidth="1.5" />
-            <line x1="22" y1="61" x2="14" y2="61" stroke="#19B7A5" strokeWidth="1.5" />
-            <line x1="68" y1="33" x2="76" y2="33" stroke="#19B7A5" strokeWidth="1.5" />
-            <line x1="68" y1="47" x2="76" y2="47" stroke="#19B7A5" strokeWidth="1.5" />
-            <line x1="68" y1="61" x2="76" y2="61" stroke="#19B7A5" strokeWidth="1.5" />
-            {/* Valuation & Comps Target Range Bars */}
-            <rect x="98" y="44" width="28" height="34" rx="2" fill="#4776FF" fillOpacity="0.65" />
-            <rect x="138" y="30" width="28" height="48" rx="2" fill="#4776FF" />
-            <rect x="178" y="18" width="28" height="60" rx="2" fill="#19B7A5" />
-            <rect x="218" y="10" width="28" height="68" rx="2" fill="#10192D" stroke="#D7AE68" strokeWidth="1.5" />
-            {/* Target Price Guidance Line */}
-            <line x1="90" y1="24" x2="256" y2="24" stroke="#F5F6F8" strokeWidth="1.25" strokeDasharray="3 3" />
-            <text x="264" y="27" fill="#D7AE68" fontSize="8" fontFamily="JetBrains Mono" fontWeight="600">
-              TARGET
+            {/* L&T Conglomerate & Infrastructure Silhouette Motif */}
+            <rect x="20" y="34" width="20" height="44" rx="2" fill="#172C50" stroke="#4776FF" strokeWidth="1" />
+            <rect x="44" y="20" width="24" height="58" rx="2" fill="#10192D" stroke="#19B7A5" strokeWidth="1.25" />
+            <rect x="72" y="38" width="18" height="40" rx="2" fill="#172C50" stroke="#D7AE68" strokeWidth="1" />
+            {/* Tower Crane / Construction Girders */}
+            <line x1="56" y1="20" x2="56" y2="8" stroke="#D7AE68" strokeWidth="1.5" />
+            <line x1="46" y1="8" x2="82" y2="8" stroke="#D7AE68" strokeWidth="1.5" />
+            <line x1="82" y1="8" x2="82" y2="24" stroke="#D7AE68" strokeWidth="1" strokeDasharray="2 2" />
+            {/* Segment Order Inflow / Book Progression Bars */}
+            <rect x="106" y="46" width="30" height="32" rx="2" fill="#4776FF" fillOpacity="0.65" />
+            <rect x="144" y="34" width="30" height="44" rx="2" fill="#4776FF" />
+            <rect x="182" y="22" width="30" height="56" rx="2" fill="#19B7A5" />
+            <rect x="220" y="12" width="34" height="66" rx="2" fill="#10192D" stroke="#D7AE68" strokeWidth="1.5" />
+            {/* Capex & Order Inflow Trajectory Line */}
+            <polyline
+              fill="none"
+              stroke="#D7AE68"
+              strokeWidth="1.5"
+              strokeDasharray="3 3"
+              points="106,52 144,38 182,26 237,16 268,12"
+            />
+            <circle cx="268" cy="12" r="3" fill="#D7AE68" />
+            <text x="276" y="15" fill="#D7AE68" fontSize="8" fontFamily="JetBrains Mono" fontWeight="600">
+              CAPEX
             </text>
-            <text x="112" y="40" textAnchor="middle" fill="#F5F6F8" fontSize="7" fontFamily="JetBrains Mono">
-              HIST
+            <text x="121" y="42" textAnchor="middle" fill="#F5F6F8" fontSize="7" fontFamily="JetBrains Mono">
+              INFRA
             </text>
-            <text x="152" y="26" textAnchor="middle" fill="#F5F6F8" fontSize="7" fontFamily="JetBrains Mono">
-              REL
+            <text x="159" y="30" textAnchor="middle" fill="#F5F6F8" fontSize="7" fontFamily="JetBrains Mono">
+              ENERGY
             </text>
-            <text x="192" y="14" textAnchor="middle" fill="#F5F6F8" fontSize="7" fontFamily="JetBrains Mono">
-              DCF
+            <text x="197" y="18" textAnchor="middle" fill="#F5F6F8" fontSize="7" fontFamily="JetBrains Mono">
+              HI-TECH
             </text>
-            <text x="232" y="26" textAnchor="middle" fill="#D7AE68" fontSize="8" fontFamily="JetBrains Mono" fontWeight="600">
-              EQUIRUS
+            <text x="237" y="30" textAnchor="middle" fill="#D7AE68" fontSize="8" fontFamily="JetBrains Mono" fontWeight="600">
+              L&T
             </text>
           </svg>
         );

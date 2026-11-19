@@ -1,0 +1,119 @@
+{
+  "entities": {
+    "CredentialDocument": {
+      "title": "CredentialDocument",
+      "description": "Metadata record for an uploaded portfolio credential such as a Resume, Project Report, Certificate, or Academic Transcript.",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Display name assigned by the portfolio owner.",
+          "minLength": 1,
+          "maxLength": 160
+        },
+        "category": {
+          "type": "string",
+          "description": "Credential classification. Only Resume items allow visitor downloads.",
+          "enum": ["Resume", "Projects", "Certificates", "Other"]
+        },
+        "fileName": {
+          "type": "string",
+          "description": "Original uploaded file name.",
+          "minLength": 1,
+          "maxLength": 255
+        },
+        "mimeType": {
+          "type": "string",
+          "description": "Validated MIME type for in-browser preview.",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "fileSize": {
+          "type": "number",
+          "description": "Total file size in bytes (max 10 MB)."
+        },
+        "chunkCount": {
+          "type": "integer",
+          "description": "Number of base64 chunks stored in the chunks subcollection."
+        },
+        "notes": {
+          "type": "string",
+          "description": "Optional issuer, date, or context note.",
+          "maxLength": 500
+        },
+        "ownerUid": {
+          "type": "string",
+          "description": "Firebase Auth UID of the portfolio owner who uploaded the item.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of creation."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of last update."
+        }
+      },
+      "required": [
+        "name",
+        "category",
+        "fileName",
+        "mimeType",
+        "fileSize",
+        "chunkCount",
+        "ownerUid",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "CredentialChunk": {
+      "title": "CredentialChunk",
+      "description": "Base64 payload chunk belonging to a parent CredentialDocument for reliable multi-megabyte storage.",
+      "type": "object",
+      "properties": {
+        "index": {
+          "type": "integer",
+          "description": "Zero-based chunk index."
+        },
+        "data": {
+          "type": "string",
+          "description": "Base64-encoded slice of the uploaded credential file.",
+          "minLength": 1,
+          "maxLength": 600000
+        },
+        "ownerUid": {
+          "type": "string",
+          "description": "Firebase Auth UID matching the parent CredentialDocument ownerUid.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of chunk upload."
+        }
+      },
+      "required": ["index", "data", "ownerUid", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/credentials/{credentialId}": {
+      "schema": {
+        "$ref": "#/entities/CredentialDocument"
+      },
+      "description": "Publicly readable portfolio credential metadata; writes strictly restricted to the verified owner."
+    },
+    "/credentials/{credentialId}/chunks/{chunkId}": {
+      "schema": {
+        "$ref": "#/entities/CredentialChunk"
+      },
+      "description": "Chunked file content for in-website preview (and Resume-only download), gated by parent CredentialDocument."
+    }
+  }
+}

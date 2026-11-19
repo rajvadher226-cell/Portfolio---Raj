@@ -70,17 +70,17 @@ test('filterProjectsByCategory filters projects accurately', () => {
     {
       id: 'equirus',
       index: '03',
-      title: 'Equirus Semiconductor Equity Research',
-      subtitle: 'Equity Research & Valuation',
+      title: 'Larsen & Toubro (L&T) – Equity Research & Investment Analysis | Equirus',
+      subtitle: 'Equity Research & Investment Analysis',
       category: 'Equity Research',
       projectClassification: 'Equity Research',
-      headlineMetric: 'Semiconductors',
-      metricContext: 'Equity Research & Valuation',
+      headlineMetric: 'L&T',
+      metricContext: 'Infrastructure & EPC Equity Research | Equirus',
       period: '2025',
       affiliation: 'Equirus',
-      summary: 'Semiconductor equity research',
-      analyticalApproach: 'DCF & Comps',
-      assumptions: ['Industry drivers'],
+      summary: 'L&T equity research and investment analysis',
+      analyticalApproach: 'Order book & capex dynamics',
+      assumptions: ['Government capex and NIP pipeline'],
       methodology: [],
       deliverables: [],
       keyFindings: [],
@@ -101,7 +101,7 @@ test('formatResumePlainText includes key source-of-truth milestones', () => {
     headline: 'Business Finance | Valuation & Financial Modelling | Investment Analysis',
     tagline: 'Understanding Businesses. Analysing Investments. Creating Financial Insights.',
     email: 'rajvadher226@gmail.com',
-    linkedinUrl: 'https://www.linkedin.com/in/rajkumar-vadher',
+    linkedinUrl: 'https://www.linkedin.com/in/rajkumarvadher/',
   });
   assert.ok(text.includes('IIM) Kozhikode'));
   assert.ok(text.includes('Allcargo Global'));

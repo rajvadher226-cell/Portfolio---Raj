@@ -9,6 +9,7 @@ import { HeroSection } from './components/HeroSection';
 import { AboutExperienceSection } from './components/AboutExperienceSection';
 import { ProjectsSection } from './components/ProjectsSection';
 import { ExpertiseCredentialsSection } from './components/ExpertiseCredentialsSection';
+import { CredentialVaultSection } from './components/CredentialVaultSection';
 import { InsightsContactSection } from './components/InsightsContactSection';
 
 export default function App() {
@@ -24,10 +25,11 @@ export default function App() {
       </a>
       <Navbar onOpenDossier={() => setDossierOpen(true)} />
       <main id="main-content" className="flex-1">
-        <HeroSection onOpenDossier={() => setDossierOpen(true)} />
+        <HeroSection />
         <AboutExperienceSection />
         <ProjectsSection />
         <ExpertiseCredentialsSection />
+        <CredentialVaultSection />
         <InsightsContactSection
           dossierOpen={dossierOpen}
           onOpenDossier={() => setDossierOpen(true)}

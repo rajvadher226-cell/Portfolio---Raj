@@ -19,7 +19,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenDossier }) => {
   const [activeSection, setActiveSection] = useState<string>('about');
 
   useEffect(() => {
-    const sectionIds = ['about', 'experience', 'projects', 'expertise', 'credentials', 'insights', 'contact'];
+    const sectionIds = ['about', 'experience', 'projects', 'expertise', 'credentials', 'credential-vault', 'contact'];
     const elements = sectionIds
       .map((id) => document.getElementById(id))
       .filter((el): el is HTMLElement => el !== null);
@@ -149,18 +149,18 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenDossier }) => {
               );
             })}
             <a
-              href="#insights"
+              href="#credential-vault"
               onClick={() => setMobileMenuOpen(false)}
               className="text-sm font-medium text-[#F5F6F8]/85 hover:text-[#4776FF] py-1.5 border-b border-[#243B67]/60"
             >
-              Insights (Sample Layout)
+              Document Vault
             </a>
             <a
               href="#contact"
               onClick={() => setMobileMenuOpen(false)}
               className="text-sm font-medium text-[#F5F6F8]/85 hover:text-[#4776FF] py-1.5"
             >
-              Contact & Resume
+              Contact &amp; Correspondence
             </a>
           </nav>
           <button
