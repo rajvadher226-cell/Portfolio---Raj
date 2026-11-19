@@ -41,6 +41,21 @@ import {
   type CredentialRecord,
 } from '../utils/credentialVault';
 import { ScrollReveal } from './ScrollReveal';
+import { VaultDocumentPreviewer } from './VaultDocumentPreviewer';
+
+function formatVaultError(err: unknown, fallback: string): string {
+  const raw = err instanceof Error ? err.message : String(err ?? '');
+  if (!raw) return fallback;
+  try {
+    const parsed = JSON.parse(raw) as { error?: string };
+    if (parsed && typeof parsed.error === 'string' && parsed.error.trim()) {
+      return parsed.error;
+    }
+  } catch {
+    // Plain error message string
+  }
+  return raw;
+}
 
 const FILTER_TABS = ['All', ...CREDENTIAL_CATEGORIES] as const;
 
@@ -80,6 +95,7 @@ export const CredentialVaultSection: React.FC = () => {
   const [previewItem, setPreviewItem] = useState<CredentialRecord | null>(null);
   const [previewLoading, setPreviewLoading] = useState<boolean>(false);
   const [previewError, setPreviewError] = useState<string | null>(null);
+  const [previewBytes, setPreviewBytes] = useState<Uint8Array | null>(null);
   const [previewBlobUrl, setPreviewBlobUrl] = useState<string | null>(null);
   const [previewText, setPreviewText] = useState<string | null>(null);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
@@ -134,6 +150,7 @@ export const CredentialVaultSection: React.FC = () => {
       URL.revokeObjectURL(previewBlobUrl);
     }
     setPreviewItem(null);
+    setPreviewBytes(null);
     setPreviewBlobUrl(null);
     setPreviewText(null);
     setPreviewError(null);
@@ -145,18 +162,26 @@ export const CredentialVaultSection: React.FC = () => {
       URL.revokeObjectURL(previewBlobUrl);
       setPreviewBlobUrl(null);
     }
+    setListError(null);
     setPreviewItem(item);
+    setPreviewBytes(null);
     setPreviewText(null);
     setPreviewError(null);
     setPreviewLoading(true);
 
     try {
-      const result = await fetchCredentialPreviewContent(item.id, item.mimeType);
+      const result = await fetchCredentialPreviewContent(
+        item.id,
+        item.mimeType,
+        item.chunkCount,
+        item.fileName
+      );
+      setPreviewBytes(result.bytes);
       setPreviewBlobUrl(result.blobUrl);
       setPreviewText(result.textContent ?? null);
     } catch (err) {
       setPreviewError(
-        err instanceof Error ? err.message : 'Unable to load preview right now.'
+        formatVaultError(err, 'Unable to load preview right now.')
       );
     } finally {
       setPreviewLoading(false);
@@ -165,12 +190,18 @@ export const CredentialVaultSection: React.FC = () => {
 
   const handleDownloadResume = async (item: CredentialRecord) => {
     if (!canDownloadCredential(item.category)) return;
+    setListError(null);
     setDownloadingId(item.id);
     try {
       let url = previewItem?.id === item.id ? previewBlobUrl : null;
       let shouldRevoke = false;
       if (!url) {
-        const res = await fetchCredentialPreviewContent(item.id, item.mimeType);
+        const res = await fetchCredentialPreviewContent(
+          item.id,
+          item.mimeType,
+          item.chunkCount,
+          item.fileName
+        );
         url = res.blobUrl;
         shouldRevoke = true;
       }
@@ -181,12 +212,15 @@ export const CredentialVaultSection: React.FC = () => {
       link.click();
       document.body.removeChild(link);
       if (shouldRevoke) {
-        setTimeout(() => URL.revokeObjectURL(url!), 1500);
+        setTimeout(() => URL.revokeObjectURL(url!), 2000);
       }
     } catch (err) {
-      setListError(
-        err instanceof Error ? err.message : 'Failed to download resume file.'
-      );
+      const msg = formatVaultError(err, 'Failed to download resume file.');
+      if (previewItem?.id === item.id) {
+        setPreviewError(msg);
+      } else {
+        setListError(msg);
+      }
     } finally {
       setDownloadingId(null);
     }
@@ -532,7 +566,7 @@ export const CredentialVaultSection: React.FC = () => {
                 <div className="lg:col-span-7 flex flex-col justify-between space-y-4">
                   <div className="space-y-1.5 flex-1 flex flex-col">
                     <span className="block text-xs font-mono-num text-[#D7AE68]">
-                      FILE ATTACHMENT (PDF, PNG, JPG, WEBP, TXT, CSV, MD · MAX 10 MB) *
+                      FILE ATTACHMENT (PDF, PPTX, PNG, JPG, WEBP, TXT, CSV, MD · MAX 10 MB) *
                     </span>
                     <label
                       htmlFor="credential-file"
@@ -554,7 +588,7 @@ export const CredentialVaultSection: React.FC = () => {
                             Click to choose a file from your device
                           </div>
                           <div className="text-xs text-[#F5F6F8]/65">
-                            PDFs and high-resolution images render natively inside the website previewer
+                            PDFs, PowerPoint decks (.pptx), and high-resolution images render natively inside the website previewer
                           </div>
                         </div>
                       )}
@@ -562,7 +596,7 @@ export const CredentialVaultSection: React.FC = () => {
                         ref={fileInputRef}
                         id="credential-file"
                         type="file"
-                        accept=".pdf,.png,.jpg,.jpeg,.webp,.txt,.md,.csv,application/pdf,image/*"
+                        accept=".pdf,.pptx,.png,.jpg,.jpeg,.webp,.txt,.md,.csv,application/pdf,application/vnd.openxmlformats-officedocument.presentationml.presentation,image/*"
                         onChange={handleFileChange}
                         className="sr-only"
                       />
@@ -716,7 +750,7 @@ export const CredentialVaultSection: React.FC = () => {
               const downloadable = canDownloadCredential(item.category);
               const isEditing = editingId === item.id;
               const isConfirmingDelete = confirmDeleteId === item.id;
-              const mimeKind = isPreviewableMime(item.mimeType);
+              const mimeKind = isPreviewableMime(item.mimeType, item.fileName);
 
               return (
                 <article
@@ -995,64 +1029,13 @@ export const CredentialVaultSection: React.FC = () => {
                 <div className="p-6 rounded-lg bg-white border border-[#FECACA] text-sm text-[#991B1B] max-w-md text-center">
                   {previewError}
                 </div>
-              ) : previewBlobUrl ? (
-                (() => {
-                  const kind = isPreviewableMime(previewItem.mimeType);
-                  const downloadable = canDownloadCredential(previewItem.category);
-                  if (kind === 'pdf') {
-                    const pdfSrc = downloadable
-                      ? previewBlobUrl
-                      : `${previewBlobUrl}#toolbar=0&navpanes=0&scrollbar=1`;
-                    return (
-                      <iframe
-                        src={pdfSrc}
-                        title={previewItem.name}
-                        className="w-full h-full rounded-lg border border-[#DCE2EC] bg-white shadow-inner"
-                      />
-                    );
-                  }
-                  if (kind === 'image') {
-                    return (
-                      <div className="w-full h-full flex items-center justify-center overflow-auto">
-                        <img
-                          src={previewBlobUrl}
-                          alt={previewItem.name}
-                          draggable={downloadable}
-                          onContextMenu={(e) => {
-                            if (!downloadable) e.preventDefault();
-                          }}
-                          className={`max-w-full max-h-full object-contain rounded-lg shadow-lg border border-[#DCE2EC] bg-white ${
-                            downloadable ? '' : 'select-none'
-                          }`}
-                        />
-                      </div>
-                    );
-                  }
-                  if (kind === 'text' && previewText !== null) {
-                    return (
-                      <pre
-                        className={`w-full h-full overflow-auto p-6 rounded-lg bg-white border border-[#DCE2EC] text-xs sm:text-sm font-mono-num text-[#192438] whitespace-pre-wrap leading-relaxed ${
-                          downloadable ? '' : 'select-none'
-                        }`}
-                      >
-                        {previewText}
-                      </pre>
-                    );
-                  }
-                  return (
-                    <div className="p-8 rounded-xl bg-white border border-[#DCE2EC] max-w-md text-center space-y-3">
-                      <FileText className="w-10 h-10 text-[#4776FF] mx-auto" aria-hidden="true" />
-                      <h4 className="font-editorial text-xl font-semibold text-[#10192D]">
-                        Preview Format Not Supported Directly by Browser
-                      </h4>
-                      <p className="text-xs text-[#5E6D87] leading-relaxed">
-                        {downloadable
-                          ? 'You can download this Resume directly using the Download Resume button above.'
-                          : 'Please upload PDF, PNG, JPG, or TXT files for Projects and Certificates so visitors can preview them directly inside the website.'}
-                      </p>
-                    </div>
-                  );
-                })()
+              ) : previewBytes && previewBlobUrl ? (
+                <VaultDocumentPreviewer
+                  item={previewItem}
+                  bytes={previewBytes}
+                  blobUrl={previewBlobUrl}
+                  textContent={previewText}
+                />
               ) : null}
             </div>
           </div>

@@ -111,7 +111,7 @@ service cloud.firestore {
       // Chunked file payload subcollection
       match /chunks/{chunkId} {
         allow get: if isValidId(credentialId) && isValidId(chunkId);
-        allow list: if resource.data.index is int && resource.data.index >= 0 && resource.data.index < 32;
+        allow list: if resource.data.index >= 0 && resource.data.index < 32;
 
         allow create: if isVerifiedOwner()
           && isValidId(credentialId)

@@ -1,6 +1,7 @@
 import {
   collection,
   doc,
+  getDoc,
   getDocs,
   onSnapshot,
   query,
@@ -11,103 +12,42 @@ import {
   type Unsubscribe,
 } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../firebase';
+import {
+  arrayBufferToBase64,
+  base64ToUint8Array,
+  canDownloadCredential,
+  CHUNK_CHAR_SIZE,
+  chunkBase64String,
+  CREDENTIAL_CATEGORIES,
+  formatFileSize,
+  inferMimeTypeFromMeta,
+  isPreviewableMime,
+  MAX_CHUNK_COUNT,
+  MAX_CREDENTIAL_FILE_BYTES,
+  type CredentialCategory,
+  type CredentialRecord,
+  type PreviewKind,
+} from './credentialPreviewHelpers';
 
-export const CREDENTIAL_CATEGORIES = [
-  'Resume',
-  'Projects',
-  'Certificates',
-  'Other',
-] as const;
+export {
+  canDownloadCredential,
+  CHUNK_CHAR_SIZE,
+  chunkBase64String,
+  CREDENTIAL_CATEGORIES,
+  formatFileSize,
+  isPreviewableMime,
+  MAX_CHUNK_COUNT,
+  MAX_CREDENTIAL_FILE_BYTES,
+  type CredentialCategory,
+  type CredentialRecord,
+  type PreviewKind,
+};
 
-export type CredentialCategory = (typeof CREDENTIAL_CATEGORIES)[number];
-
-export interface CredentialRecord {
-  id: string;
-  name: string;
-  category: CredentialCategory;
-  fileName: string;
+export interface CredentialPreviewPayload {
+  bytes: Uint8Array;
+  blobUrl: string;
   mimeType: string;
-  fileSize: number;
-  chunkCount: number;
-  notes?: string;
-  ownerUid: string;
-  createdAtMs: number;
-}
-
-export const MAX_CREDENTIAL_FILE_BYTES = 10 * 1024 * 1024; // 10 MB
-export const CHUNK_CHAR_SIZE = 450_000;
-export const MAX_CHUNK_COUNT = 32;
-
-export function canDownloadCredential(category: CredentialCategory): boolean {
-  return category === 'Resume';
-}
-
-export function formatFileSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
-}
-
-export function isPreviewableMime(
-  mimeType: string
-): 'pdf' | 'image' | 'text' | 'unsupported' {
-  const normalized = mimeType.toLowerCase();
-  if (normalized === 'application/pdf') return 'pdf';
-  if (normalized.startsWith('image/')) return 'image';
-  if (
-    normalized.startsWith('text/') ||
-    normalized === 'application/json' ||
-    normalized === 'application/csv'
-  ) {
-    return 'text';
-  }
-  return 'unsupported';
-}
-
-export function chunkBase64String(
-  base64: string,
-  chunkSize = CHUNK_CHAR_SIZE
-): string[] {
-  if (!base64) return [];
-  const chunks: string[] = [];
-  for (let i = 0; i < base64.length; i += chunkSize) {
-    chunks.push(base64.slice(i, i + chunkSize));
-  }
-  return chunks;
-}
-
-function arrayBufferToBase64(buffer: ArrayBuffer): string {
-  const bytes = new Uint8Array(buffer);
-  const blockSize = 0x8000;
-  let binary = '';
-  for (let i = 0; i < bytes.length; i += blockSize) {
-    const slice = bytes.subarray(i, i + blockSize);
-    binary += String.fromCharCode.apply(null, Array.from(slice));
-  }
-  return btoa(binary);
-}
-
-function base64ToUint8Array(base64: string): Uint8Array {
-  const binary = atob(base64);
-  const len = binary.length;
-  const bytes = new Uint8Array(len);
-  for (let i = 0; i < len; i++) {
-    bytes[i] = binary.charCodeAt(i);
-  }
-  return bytes;
-}
-
-function inferMimeType(file: File): string {
-  if (file.type) return file.type;
-  const lower = file.name.toLowerCase();
-  if (lower.endsWith('.pdf')) return 'application/pdf';
-  if (lower.endsWith('.png')) return 'image/png';
-  if (lower.endsWith('.jpg') || lower.endsWith('.jpeg')) return 'image/jpeg';
-  if (lower.endsWith('.webp')) return 'image/webp';
-  if (lower.endsWith('.md')) return 'text/markdown';
-  if (lower.endsWith('.csv')) return 'text/csv';
-  if (lower.endsWith('.txt')) return 'text/plain';
-  return 'application/octet-stream';
+  textContent?: string;
 }
 
 export function subscribeToCredentials(
@@ -126,12 +66,14 @@ export function subscribeToCredentials(
       const items: CredentialRecord[] = snapshot.docs.map((docSnap) => {
         const d = docSnap.data();
         const createdAtTs = d.createdAt as { toMillis?: () => number } | undefined;
+        const fileName = String(d.fileName ?? '');
+        const rawMime = String(d.mimeType ?? 'application/octet-stream');
         return {
           id: docSnap.id,
           name: String(d.name ?? ''),
           category: (d.category as CredentialCategory) ?? 'Other',
-          fileName: String(d.fileName ?? ''),
-          mimeType: String(d.mimeType ?? 'application/octet-stream'),
+          fileName,
+          mimeType: inferMimeTypeFromMeta(rawMime, fileName),
           fileSize: Number(d.fileSize ?? 0),
           chunkCount: Number(d.chunkCount ?? 1),
           notes: typeof d.notes === 'string' ? d.notes : undefined,
@@ -180,7 +122,7 @@ export async function uploadCredentialDocument(params: {
     throw new Error('File exceeds the maximum supported chunk count (32 chunks).');
   }
 
-  const mimeType = inferMimeType(file);
+  const mimeType = inferMimeTypeFromMeta(file.type, file.name);
   const credentialId = `cred_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
   const parentPath = `credentials/${credentialId}`;
   const parentRef = doc(db, 'credentials', credentialId);
@@ -255,43 +197,69 @@ export async function uploadCredentialDocument(params: {
 
 export async function fetchCredentialPreviewContent(
   credentialId: string,
-  mimeType: string
-): Promise<{ blobUrl: string; textContent?: string }> {
+  mimeType: string,
+  chunkCount?: number,
+  fileName = ''
+): Promise<CredentialPreviewPayload> {
   const chunksPath = `credentials/${credentialId}/chunks`;
-  let snap;
-  try {
-    const q = query(
-      collection(db, chunksPath),
-      where('index', '>=', 0),
-      where('index', '<', MAX_CHUNK_COUNT)
-    );
-    snap = await getDocs(q);
-  } catch (error) {
-    handleFirestoreError(error, OperationType.LIST, chunksPath);
+  const effectiveMime = inferMimeTypeFromMeta(mimeType, fileName);
+  let orderedChunks: { index: number; data: string }[] = [];
+
+  if (typeof chunkCount === 'number' && chunkCount > 0 && chunkCount <= MAX_CHUNK_COUNT) {
+    // Fetch each chunk directly by deterministic ID ("0".."chunkCount-1") via GET rules
+    const indices = Array.from({ length: chunkCount }, (_, i) => i);
+    try {
+      const snaps = await Promise.all(
+        indices.map((idx) =>
+          getDoc(doc(db, 'credentials', credentialId, 'chunks', String(idx)))
+        )
+      );
+      orderedChunks = snaps
+        .filter((s) => s.exists())
+        .map((s) => ({
+          index: Number(s.data()?.index ?? 0),
+          data: String(s.data()?.data ?? ''),
+        }))
+        .sort((a, b) => a.index - b.index);
+    } catch (error) {
+      handleFirestoreError(error, OperationType.GET, chunksPath);
+    }
+  } else {
+    let snap;
+    try {
+      const q = query(
+        collection(db, chunksPath),
+        where('index', '>=', 0),
+        where('index', '<', MAX_CHUNK_COUNT)
+      );
+      snap = await getDocs(q);
+    } catch (error) {
+      handleFirestoreError(error, OperationType.LIST, chunksPath);
+    }
+
+    orderedChunks = snap.docs
+      .map((d) => ({
+        index: Number(d.data().index ?? 0),
+        data: String(d.data().data ?? ''),
+      }))
+      .sort((a, b) => a.index - b.index);
   }
 
-  const ordered = snap.docs
-    .map((d) => ({
-      index: Number(d.data().index ?? 0),
-      data: String(d.data().data ?? ''),
-    }))
-    .sort((a, b) => a.index - b.index);
-
-  if (ordered.length === 0) {
+  if (orderedChunks.length === 0) {
     throw new Error('Credential file content could not be found.');
   }
 
-  const fullBase64 = ordered.map((c) => c.data).join('');
+  const fullBase64 = orderedChunks.map((c) => c.data).join('');
   const bytes = base64ToUint8Array(fullBase64);
-  const blob = new Blob([bytes.buffer as ArrayBuffer], { type: mimeType });
+  const blob = new Blob([bytes.slice()], { type: effectiveMime });
   const blobUrl = URL.createObjectURL(blob);
 
   let textContent: string | undefined;
-  if (isPreviewableMime(mimeType) === 'text') {
+  if (isPreviewableMime(effectiveMime, fileName) === 'text') {
     textContent = new TextDecoder('utf-8').decode(bytes);
   }
 
-  return { blobUrl, textContent };
+  return { bytes, blobUrl, mimeType: effectiveMime, textContent };
 }
 
 export async function updateCredentialMetadata(

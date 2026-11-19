@@ -8,6 +8,13 @@ import {
   formatAnimatedMetric,
   type ProjectItem,
 } from './valuationLogic';
+import {
+  canDownloadCredential,
+  isPreviewableMime,
+  chunkBase64String,
+  base64ToUint8Array,
+  inferMimeTypeFromMeta,
+} from './credentialPreviewHelpers';
 
 test('calculateImpliedValuationCr produces ~1900Cr baseline at 12.5% WACC and 4.5% growth', () => {
   const baseline = calculateImpliedValuationCr(12.5, 4.5);
@@ -108,10 +115,53 @@ test('formatResumePlainText includes key source-of-truth milestones', () => {
   assert.ok(text.includes('~₹1,900Cr'));
 });
 
+
+
 test('formatAnimatedMetric interpolates numerical metrics and preserves exact final format', () => {
   assert.equal(formatAnimatedMetric('~₹1,900Cr', 1), '~₹1,900Cr');
   assert.equal(formatAnimatedMetric('~₹1,900Cr', 0.5), '~₹950Cr');
   assert.equal(formatAnimatedMetric('$500M', 0.5), '$250M');
   assert.equal(formatAnimatedMetric('350+', 1), '350+');
 });
+
+test('canDownloadCredential restricts downloads exclusively to Resume', () => {
+  assert.equal(canDownloadCredential('Resume'), true);
+  assert.equal(canDownloadCredential('Projects'), false);
+  assert.equal(canDownloadCredential('Certificates'), false);
+  assert.equal(canDownloadCredential('Other'), false);
+});
+
+test('isPreviewableMime classifies PDF, PPTX, image, and text including octet-stream fallback', () => {
+  assert.equal(isPreviewableMime('application/pdf', 'Resume.pdf'), 'pdf');
+  assert.equal(
+    isPreviewableMime(
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+      'EYP Case Competition.pptx'
+    ),
+    'pptx'
+  );
+  assert.equal(
+    isPreviewableMime('application/octet-stream', 'EYP Case Competition.pptx'),
+    'pptx'
+  );
+  assert.equal(
+    isPreviewableMime('application/octet-stream', 'CFA Level 1.pdf'),
+    'pdf'
+  );
+  assert.equal(isPreviewableMime('image/png', 'cert.png'), 'image');
+  assert.equal(isPreviewableMime('text/markdown', 'notes.md'), 'text');
+  assert.equal(
+    inferMimeTypeFromMeta('application/octet-stream', 'deck.pptx'),
+    'application/vnd.openxmlformats-officedocument.presentationml.presentation'
+  );
+});
+
+test('chunkBase64String and base64ToUint8Array round-trip cleanly', () => {
+  const sample = 'SGVsbG8gV29ybGQh'; // "Hello World!"
+  const chunks = chunkBase64String(sample, 5);
+  assert.equal(chunks.length, 4);
+  const bytes = base64ToUint8Array(chunks.join(''));
+  assert.equal(new TextDecoder().decode(bytes), 'Hello World!');
+});
+
 
